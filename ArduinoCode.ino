@@ -96,15 +96,15 @@ void loop() {
         break;
       case 'p':
         Serial.write("Pitching (forward or backward)\n");
-        pitch(readString[1] + readString[2] + readString[3]);
+        pitch(toInt(readString[1] + readString[2] + readString[3]));
         break;
       case 'r':
         Serial.write("Rolling (left or right)\n");
-        roll(readString[1] + readString[2] + readString[3]);
+        roll(toInt(readString[1] + readString[2] + readString[3]));
         break;
       case 'y':
         Serial.write("Yawing (counterclockwise or clockwise)\n");
-        yaw(readString[1] + readString[2] + readString[3]);
+        yaw(toInt(readString[1] + readString[2] + readString[3]));
         break;
       case 'c':
         sweep(false);
