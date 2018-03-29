@@ -9,6 +9,11 @@
 
 #include <Servo.h>
 
+#define MAX_WRITE = 160;
+#define ZRO_WRITE = 30;
+#define MIN_WRITE = -100;
+#define MID_WRITE = (MAX_WRITE+MIN_WRITE)/2;
+
 Servo throttle;  // create servo object to control a servo
 Servo pitch;
 Servo roll; 
@@ -25,10 +30,6 @@ int inputThrottle = 0;    // variable to read the value from the analog pin
 int inputPitch = 90; 
 int inputRoll = 90; 
 int inputYaw = 90; 
-
-int MAX_WRITE = 160;
-int MIN_WRITE = 30;
-int MID_WRITE = (MAX_WRITE+MIN_WRITE)/2;
 
 
 bool autonomous = false;
@@ -76,9 +77,13 @@ void loop() {
   */
   Serial.available();
   if (Serial.available() > 0) {
-    int inByte = Serial.read();
+    char* readString = "";
+    while(Serial.available()){
+      char c = Serial.read();
+      readString += c;
+    }
     
-    switch (inByte) {
+    switch (readString[0]) {
       case 'a':
         Serial.write("Arming\n");
         arm();
@@ -89,13 +94,17 @@ void loop() {
         disarm();
         Serial.write("Disarmed\n");
         break;
-      case 'h':
-        Serial.write("Throttle to mid\n");
-        hover();
+      case 'p':
+        Serial.write("Pitching (forward or backward)\n");
+        pitch(readString[1] + readString[2] + readString[3]);
         break;
-      case 'm':
-        Serial.write("Throttle to max\n");
-        maxThrottle();
+      case 'r':
+        Serial.write("Rolling (left or right)\n");
+        roll(readString[1] + readString[2] + readString[3]);
+        break;
+      case 'y':
+        Serial.write("Yawing (counterclockwise or clockwise)\n");
+        yaw(readString[1] + readString[2] + readString[3]);
         break;
       case 'c':
         sweep(false);
@@ -150,7 +159,57 @@ void downsweep(bool all) {
 }
 
 void maxThrottle() {
-  throttle.write(MAX_WRITE);
+  throttle.write(50);
+}
+
+/*
+ * Causes the drone to pitch forward or backward.
+ * 
+ * @param power percentage value denoting the speed at which the drone moves. (Positive for forward, negative for backward)
+ */
+void pitch(int power){
+  //UNIMPLEMENTED
+}
+
+/*
+ * Causes the drone to roll left or right.
+ * 
+ * @param power percentage value denoting the speed at which the drone moves. (Positive for right, negative for left)
+ */
+void roll(int power){
+  //UNIMPLEMENTED
+}
+
+/*
+ * Causes the drone to yaw counterclockwise or clockwise.
+ * 
+ * @param power percentage value denoting the speed at which the drone moves. (Positive for clockwise, negative for counterclockwise)
+ */
+void yaw(int power){
+  //UNIMPLEMENTED
+}
+
+/*
+ * Converts a percentage value of domain (-100, 100) into a suitable servo power value of domain (-100, 160).
+ * 
+ * @param   percentage percentage value.
+ * @return  converted value
+ */
+int toServoValue(int percentage){
+  return (percentage * 1.3) + 30;
+}
+
+/*
+ * Casts a string as an int.
+ * 
+ * NOTE - ideally, this will use a Try/Catch type statement to catch exceptions,
+ * but this is unimplemented as of yet.
+ * 
+ * @param   in the string to be converted.
+ * @return  converted integer.
+ */
+int toInt(String in){
+  return (int)in;
 }
 
 
