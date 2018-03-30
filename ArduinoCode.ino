@@ -9,10 +9,10 @@
 
 #include <Servo.h>
 
-#define MAX_WRITE = 160;
-#define ZRO_WRITE = 30;
-#define MIN_WRITE = -100;
-#define MID_WRITE = (MAX_WRITE+MIN_WRITE)/2;
+#define MAX_WRITE 160
+#define ZRO_WRITE 30
+#define MIN_WRITE -100
+#define MID_WRITE (MAX_WRITE+MIN_WRITE)/2
 
 Servo throttle;  // create servo object to control a servo
 Servo pitch;
@@ -96,15 +96,15 @@ void loop() {
         break;
       case 'p':
         Serial.write("Pitching (forward or backward)\n");
-        pitch(toInt(readString[1] + readString[2] + readString[3]));
+        doPitch(toInt(readString[1] + readString[2] + readString[3]));
         break;
       case 'r':
         Serial.write("Rolling (left or right)\n");
-        roll(toInt(readString[1] + readString[2] + readString[3]));
+        doRoll(toInt(readString[1] + readString[2] + readString[3]));
         break;
       case 'y':
         Serial.write("Yawing (counterclockwise or clockwise)\n");
-        yaw(toInt(readString[1] + readString[2] + readString[3]));
+        doYaw(toInt(readString[1] + readString[2] + readString[3]));
         break;
       case 'c':
         sweep(false);
@@ -167,8 +167,8 @@ void maxThrottle() {
  * 
  * @param power percentage value denoting the speed at which the drone moves. (Positive for forward, negative for backward)
  */
-void pitch(int power){
-  //UNIMPLEMENTED
+void doPitch(int power) {
+  pitch.write(toServoValue(power));
 }
 
 /*
@@ -176,8 +176,8 @@ void pitch(int power){
  * 
  * @param power percentage value denoting the speed at which the drone moves. (Positive for right, negative for left)
  */
-void roll(int power){
-  //UNIMPLEMENTED
+void doRoll(int power) {
+  roll.write(toServoValue(power));
 }
 
 /*
@@ -185,8 +185,8 @@ void roll(int power){
  * 
  * @param power percentage value denoting the speed at which the drone moves. (Positive for clockwise, negative for counterclockwise)
  */
-void yaw(int power){
-  //UNIMPLEMENTED
+void doYaw(int power) {
+  yaw.write(toServoValue(power));
 }
 
 /*
@@ -195,7 +195,7 @@ void yaw(int power){
  * @param   percentage percentage value.
  * @return  converted value
  */
-int toServoValue(int percentage){
+int toServoValue(int percentage) {
   return (percentage * 1.3) + 30;
 }
 
@@ -208,7 +208,7 @@ int toServoValue(int percentage){
  * @param   in the string to be converted.
  * @return  converted integer.
  */
-int toInt(String in){
+int toInt(String in) {
   return (int)in;
 }
 
