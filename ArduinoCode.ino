@@ -1,24 +1,26 @@
 /*
- Controlling a servo position using a potentiometer (variable resistor)
- by Michal Rinott <http://people.interaction-ivrea.it/m.rinott>
+Ottabotics Ariel Robotics Team
 
- modified on 8 Nov 2013
- by Scott Fitzgerald
- http://www.arduino.cc/en/Tutorial/Knob
+Arduino acting as a junction and translator between Reciever, Serial, and Flight Controller.
+
+Humam Shwaikh
+Brennan Macdonald
+
 */
 
 #include <Servo.h>
 
 int MAX_WRITE = 160;
-int MIN_WRITE = 30;
-int MID_WRITE = (MAX_WRITE+MIN_WRITE)/2;
+int MIN_WRITE = 20;
+int MID_WRITE = 90;
 
 Servo throttle;  // create servo object to control a servo
 Servo pitch;
 Servo roll; 
 Servo yaw; 
-Servo nothing; 
-Servo alsoNothing; 
+
+const int MAX_PULSE = 1875;
+const int MIN_PULSE = 1050;
 
 int serialThrottle = 512;    // variable to read the value from the serial port
 int serialPitch = 512; 
@@ -30,47 +32,102 @@ int inputPitch = 90;
 int inputRoll = 90; 
 int inputYaw = 90; 
 
+int throttlePinIn = 11;
+int pitchPinIn = 9;
+int yawPinIn = 12;
+int rollPinIn = 10;
+int autoPin = 8;
+
+unsigned long throttlePulse;
+unsigned long pitchPulse;
+unsigned long rollPulse;
+unsigned long yawPulse;
+
 
 // Throttle 11
 // Yaw 12
 // Pitch 9
-// Roll 7
+// Roll 7 or 10
 
 
-bool autonomous = true;
+bool autonomous = false;
 
 void setup() {
   throttle.attach(2);  // attaches the servo on pin 9 to the servo object
   pitch.attach(3);
   roll.attach(5);
   yaw.attach(4);
-  nothing.attach(7);
-  alsoNothing.attach(8);
+  
+  pinMode(throttlePinIn, INPUT);
+  pinMode(pitchPinIn, INPUT);
+  pinMode(yawPinIn, INPUT);
+  pinMode(rollPinIn, INPUT);
+
+  pinMode(autoPin, INPUT);
+  pinMode(6, INPUT);
+  pinMode(8, INPUT);
 
   //initalization
   pitch.write(MID_WRITE); 
   roll.write(MIN_WRITE);
   throttle.write(MIN_WRITE);
   yaw.write(MID_WRITE); 
-  nothing.write(MIN_WRITE);
-  alsoNothing.write(MIN_WRITE);
 
-  Serial.begin(2000000);
+
+  Serial.begin(9600);
+  arm();
 }
 
 void loop() {
+
+
+  //Tests the "gear" switch to see if it's activated. If it is, autonomous flight will start.
+  if (pulseIn(autoPin, HIGH) > 1500 && !autonomous){ 
+    autonomous = true;  
+    Serial.write("Autopilot Engaged");
+  } else if (pulseIn(autoPin, HIGH) < 1500 && autonomous){
+    autonomous = false;
+    Serial.write("Autopilot Disengaged");
+  }
+  
   if (!autonomous){
+
+    /*    Passthrough RC to flight board
+     *    reads the pulse length from the reciever, remaps it our write values, 
+     *    then writes to the corresponding contol
+     * 
+     */
+
+    //Serial.println(pulseIn(8, HIGH));
+     
+    throttlePulse = pulseIn(throttlePinIn,HIGH);
+    pitchPulse = pulseIn(pitchPinIn,HIGH);
+    rollPulse = pulseIn(rollPinIn,HIGH);
+    yawPulse = pulseIn(yawPinIn,HIGH);
     
-    digitalWrite(2,digitalRead(11));
-    digitalWrite(3,digitalRead(9));
-    digitalWrite(4,digitalRead(12));
-    digitalWrite(5,digitalRead(10));
+    throttlePulse = map(throttlePulse, MIN_PULSE, MAX_PULSE, 10, MAX_WRITE);
+    pitchPulse = map(pitchPulse, MIN_PULSE, MAX_PULSE, MIN_WRITE, MAX_WRITE);
+    rollPulse = map(rollPulse, MIN_PULSE, MAX_PULSE, MIN_WRITE, MAX_WRITE);
+    yawPulse = map(yawPulse, MIN_PULSE, MAX_PULSE, MIN_WRITE, MAX_WRITE);
     
-  } else {
+    throttle.write(throttlePulse); //throttle passthrough
+    pitch.write(pitchPulse); //pitch passthrough
+    roll.write(rollPulse); //roll passthrough
+    yaw.write(yawPulse); //yaw passthrough
+    
+  } else {    
+
+    //Serial.println("Destroy all humans.");
+    
     Serial.available();
+    
     if (Serial.available() > 0) {
+      // Control byte - (a,d,p,r,y,c) 
       int inByte = Serial.read();
+      
       char* readString = "";
+      
+      // future use, command arguments
       while(Serial.available()){
         char c = Serial.read();
         readString += c;
@@ -150,10 +207,6 @@ void downsweep(bool all) {
     }
     delay(100);
   }
-}
-
-void maxThrottle() {
-  throttle.write(50);
 }
 
 /*
